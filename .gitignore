@@ -1,0 +1,14 @@
+.vscode
+Implementation/corpus
+Implementation/data
+**/__pycache__
+Implementation/label_source
+Implementation/labels
+Implementation/model/keras2
+Implementation/model/model
+Implementation/model/result
+Implementation/vector
+Implementation/w2v_model
+**/*.pyc
+Program_data
+slice_all
