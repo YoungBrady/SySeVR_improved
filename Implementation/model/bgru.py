@@ -25,6 +25,25 @@ RANDOMSEED = 2018  # for reproducibility
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+class F1Score(tf.keras.metrics.Metric):
+    def __init__(self, name='f1_score', **kwargs):
+        super(F1Score, self).__init__(name=name, **kwargs)
+        self.precision = self.add_weight(name='precision', initializer='zeros')
+        self.recall = self.add_weight(name='recall', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        true_positives = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred, 0, 1)))
+        possible_positives = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true, 0, 1)))
+
+        self.precision.assign_add(true_positives / (predicted_positives + tf.keras.backend.epsilon()))
+        self.recall.assign_add(true_positives / (possible_positives + tf.keras.backend.epsilon()))
+
+    def result(self):
+        f1 = 2 * (self.precision * self.recall) / (self.precision + self.recall + tf.keras.backend.epsilon())
+        return tf.where(tf.math.is_nan(f1), tf.zeros_like(f1), f1)
+
+
 
 def build_model(maxlen, vector_dim, layers, dropout):
     print('Build model...')
@@ -91,7 +110,7 @@ def main(traindataSet_path, testdataSet_path, realtestpath, weightpath, resultpa
     train_generator = tf.data.Dataset.from_generator(
     generator_of_data,
     output_signature=(
-        tf.TensorSpec(shape=(batch_size, maxlen, vector_dim), dtype=tf.float32),
+        tf.TensorSpec(shape=(batch_size, maxlen, vector_dim), dtype=tf.float16),
         tf.TensorSpec(shape=(batch_size,), dtype=tf.int32)
     ),
     args=(train_dataset, train_labels, batch_size, maxlen, vector_dim)
@@ -99,7 +118,7 @@ def main(traindataSet_path, testdataSet_path, realtestpath, weightpath, resultpa
     valid_generator = tf.data.Dataset.from_generator(
     generator_of_data,
     output_signature=(
-        tf.TensorSpec(shape=(batch_size, maxlen, vector_dim), dtype=tf.float32),
+        tf.TensorSpec(shape=(batch_size, maxlen, vector_dim), dtype=tf.float16),
         tf.TensorSpec(shape=(batch_size,), dtype=tf.int32)
     ),
     args=(valid_dataset,valid_labels, batch_size, maxlen, vector_dim)
@@ -148,7 +167,15 @@ def main(traindataSet_path, testdataSet_path, realtestpath, weightpath, resultpa
     labels = bin_labels
 
     batch_size = 1
-    test_generator = generator_of_data(dataset, labels, batch_size, maxlen, vector_dim)
+    # test_generator = generator_of_data(dataset, labels, batch_size, maxlen, vector_dim)
+    test_generator = tf.data.Dataset.from_generator(
+    generator_of_data,
+    output_signature=(
+        tf.TensorSpec(shape=(batch_size, maxlen, vector_dim), dtype=tf.float16),
+        tf.TensorSpec(shape=(batch_size,), dtype=tf.int32)
+    ),
+    args=(dataset,labels, batch_size, maxlen, vector_dim)
+)
     all_test_samples = len(dataset)
     steps_epoch = int(math.ceil(all_test_samples / batch_size))
 
