@@ -229,5 +229,5 @@ if __name__ == "__main__":
     resultPath = "./result/BGRU/BGRU"
     os.makedirs("./model",exist_ok=True)
     os.makedirs("./result/BGRU",exist_ok=True)
-    main(traindataSetPath, testdataSetPath, realtestdataSetPath, weightPath, resultPath, batchSize, maxLen, vectorDim, layers, dropout,train=True)
+    main(traindataSetPath, testdataSetPath, realtestdataSetPath, weightPath, resultPath, batchSize, maxLen, vectorDim, layers, dropout,train=False)
     # testrealdata(realtestdataSetPath, weightPath, batchSize, maxLen, vectorDim, layers, dropout)
