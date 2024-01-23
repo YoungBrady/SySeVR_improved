@@ -8,7 +8,7 @@ Implementation/model/keras2
 Implementation/model/model
 Implementation/model/result
 Implementation/vector
-Implementation/w2v_model
+# Implementation/w2v_model
 **/*.pyc
 Program_data
 slice_all
